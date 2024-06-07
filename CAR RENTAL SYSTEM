@@ -1,0 +1,213 @@
+package com.mycompany.assproject1;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
+// Class to represent a car in the rental agency
+class Vehicle {
+    private String plateNumber;
+    private String carModel;
+    private boolean rentedStatus;
+    private int year;
+    private String color;
+    private int mileage;
+
+    public Vehicle(String plateNumber, String carModel, int year, String color, int mileage) {
+        this.plateNumber = plateNumber;
+        this.carModel = carModel;
+        this.year = year;
+        this.color = color;
+        this.mileage = mileage;
+        this.rentedStatus = false;
+    }
+
+    public String getPlateNumber() {
+        return plateNumber;
+    }
+
+    public String getCarModel() {
+        return carModel;
+    }
+
+    public boolean isRented() {
+        return rentedStatus;
+    }
+
+    public void rentOut() {
+        this.rentedStatus = true;
+    }
+
+    public void returnVehicle() {
+        this.rentedStatus = false;
+    }
+
+    @Override
+    public String toString() {
+        return "Vehicle{" +
+                "Plate Number='" + plateNumber + '\'' +
+                ", Car Model='" + carModel + '\'' +
+                ", Year=" + year +
+                ", Color='" + color + '\'' +
+                ", Mileage=" + mileage +
+                ", Rented Status=" + rentedStatus +
+                '}';
+    }
+}
+
+// Class to represent a customer
+class Client {
+    private String fullName;
+    private String licenseNumber;
+    private List<String> rentalHistory;
+
+    public Client(String fullName, String licenseNumber) {
+        this.fullName = fullName;
+        this.licenseNumber = licenseNumber;
+        this.rentalHistory = new ArrayList<>();
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public String getLicenseNumber() {
+        return licenseNumber;
+    }
+
+    public void addRental(String rentalRecord) {
+        rentalHistory.add(rentalRecord);
+    }
+
+    public List<String> getRentalHistory() {
+        return rentalHistory;
+    }
+
+    @Override
+    public String toString() {
+        return "Client{" +
+                "Full Name='" + fullName + '\'' +
+                ", License Number='" + licenseNumber + '\'' +
+                '}';
+    }
+}
+
+// Class to manage the rental agency's operations
+class RentalService {
+    private List<Vehicle> vehicleList;
+    private List<Client> clientList;
+
+    public RentalService() {
+        this.vehicleList = new ArrayList<>();
+        this.clientList = new ArrayList<>();
+    }
+
+    public void addVehicle(Vehicle vehicle) {
+        vehicleList.add(vehicle);
+    }
+
+    public void addClient(Client client) {
+        if (!isValidLicenseNumber(client.getLicenseNumber())) {
+            System.out.println("Invalid license number: " + client.getLicenseNumber());
+            return;
+        }
+        clientList.add(client);
+    }
+
+    private boolean isValidLicenseNumber(String licenseNumber) {
+        String regex = "^[A-Z]\\d{7}$"; // Simple regex for license number validation
+        return Pattern.matches(regex, licenseNumber);
+    }
+
+    public Vehicle findAvailableVehicle(String model) {
+        for (Vehicle vehicle : vehicleList) {
+            if (vehicle.getCarModel().equalsIgnoreCase(model) && !vehicle.isRented()) {
+                return vehicle;
+            }
+        }
+        return null;
+    }
+
+    public boolean rentVehicle(Client client, String model) {
+        Vehicle vehicle = findAvailableVehicle(model);
+        if (vehicle != null) {
+            vehicle.rentOut();
+            client.addRental("Rented " + vehicle + " on " + java.time.LocalDate.now());
+            System.out.println(client.getFullName() + " rented: " + vehicle);
+            return true;
+        } else {
+            System.out.println("No available vehicle of model: " + model);
+            return false;
+        }
+    }
+
+    public void returnVehicle(Client client, Vehicle vehicle) {
+        if (vehicle.isRented()) {
+            vehicle.returnVehicle();
+            client.addRental("Returned " + vehicle + " on " + java.time.LocalDate.now());
+            System.out.println("Vehicle returned: " + vehicle);
+        } else {
+            System.out.println("Vehicle is not currently rented: " + vehicle);
+        }
+    }
+
+    public List<Vehicle> getVehicleList() {
+        return vehicleList;
+    }
+
+    public List<Client> getClientList() {
+        return clientList;
+    }
+
+    public List<Vehicle> getAvailableVehicles() {
+        List<Vehicle> availableVehicles = new ArrayList<>();
+        for (Vehicle vehicle : vehicleList) {
+            if (!vehicle.isRented()) {
+                availableVehicles.add(vehicle);
+            }
+        }
+        return availableVehicles;
+    }
+
+    @Override
+    public String toString() {
+        return "RentalService{" +
+                "Vehicle List=" + vehicleList +
+                ", Client List=" + clientList +
+                '}';
+    }
+}
+
+// Main class to run the application
+public class ASSproject1 {
+    public static void main(String[] args) {
+        // Creating an instance of the rental service
+        RentalService rentalService = new RentalService();
+
+        // Adding vehicles to the rental service
+        rentalService.addVehicle(new Vehicle("DEF456", "Tesla Model S", 2020, "Red", 15000));
+        rentalService.addVehicle(new Vehicle("GHI789", "Chevrolet Malibu", 2019, "Black", 30000));
+        rentalService.addVehicle(new Vehicle("JKL012", "BMW 3 Series", 2021, "White", 10000));
+
+        // Adding clients to the rental service
+        rentalService.addClient(new Client("Alice Johnson", "D9876543"));
+        rentalService.addClient(new Client("Bob Brown", "D6543210"));
+
+        // Renting out a vehicle
+        Client firstClient = rentalService.getClientList().get(0);
+        rentalService.rentVehicle(firstClient, "Tesla Model S");
+
+        // Returning a vehicle
+        Vehicle rentedVehicle = rentalService.getVehicleList().get(0);
+        rentalService.returnVehicle(firstClient, rentedVehicle);
+
+        // Displaying available vehicles
+        System.out.println("Available Vehicles: " + rentalService.getAvailableVehicles());
+
+        // Displaying rental history for the first client
+        System.out.println("Rental History for " + firstClient.getFullName() + ": " + firstClient.getRentalHistory());
+
+        // Printing the state of the rental service
+        System.out.println(rentalService);
+    }
+}
